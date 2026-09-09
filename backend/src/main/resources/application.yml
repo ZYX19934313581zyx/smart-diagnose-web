@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: backend
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/smart_diagnose?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.cnu.zyx.backend.entity
+  configuration:
+    map-underscore-to-camel-case: true # 数据库下划线自动转实体类驼峰命名
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #打印SQL日志
+
+# 服务端口
+server:
+  port: 8081
+
+# 阿里云OSS配置（成都节点）
+aliyun:
+  oss:
+    endpoint: oss-cn-chengdu.aliyuncs.com
+    access-key-id: 填写你的阿里云AccessKeyId
+    access-key-secret: 填写你的阿里云AccessKeySecret
+    bucket-name: smart-diagnose-web
+    url-prefix: https://smart-diagnose-web.oss-cn-chengdu.aliyuncs.com/
+
+# 通义千问流式AI配置
+ai:
+  qwen:
+      api-key: 填写你的通义千问APIKEY
+      base-url: https://ws-ba0h7puvu1ipznda.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/
+      model: qwen3.8-flash

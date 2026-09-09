@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cnu.zyx.backend.mapper.DoctorInfoMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into doctor_info(user_id, real_name, department, hospital, title, audit_status)
+        values (#{userId},#{realName},#{department},#{hospital},#{title},'wait')
+    </insert>
+
+    <insert id="insertEmpty">
+        insert into doctor_info(user_id,audit_status)
+        values(#{userId},'wait')
+    </insert>
+
+    <select id="selectWaitAuditDoctor" resultType="java.util.Map">
+        select di.*,
+               u.username,
+               u.role,
+               u.status
+        from doctor_info di
+                 left join sys_user u on di.user_id = u.id
+        where di.audit_status = 'wait'
+    </select>
+
+    <update id="updateAuditStatus">
+        update doctor_info
+        set audit_status = #{auditStatus}
+        where user_id = #{userId}
+    </update>
+
+    <select id="selectByUserId" resultType="com.cnu.zyx.backend.entity.DoctorInfo">
+        select * from doctor_info where user_id = #{userId}
+    </select>
+
+    <update id="updateByUserId">
+        update doctor_info
+        set
+            real_name = #{info.realName},
+            department = #{info.department},
+            title = #{info.title},
+            hospital = #{info.hospital}
+        where user_id = #{info.userId}
+    </update>
+
+    <select id="selectDoctorPage" resultType="com.cnu.zyx.backend.entity.DoctorInfo">
+        select * from doctor_info
+        <where>
+            <if test="name != null and name != ''">
+                real_name like concat('%',#{name},'%')
+            </if>
+            <if test="department != null and department != ''">
+                and department = #{department}
+            </if>
+        </where>
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="countDoctor" resultType="java.lang.Long">
+        select count(*) from doctor_info
+        <where>
+            <if test="name != null and name != ''">
+                real_name like concat('%',#{name},'%')
+            </if>
+            <if test="department != null and department != ''">
+                and department = #{department}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateById">
+        update doctor_info
+        set real_name = #{realName},
+            department = #{department},
+            hospital = #{hospital},
+            title = #{title},
+            audit_status = #{auditStatus}
+        where user_id = #{userId}
+    </update>
+
+    <delete id="deleteByUserId">
+        delete from doctor_info where user_id = #{userId}
+    </delete>
+
+    <!-- 新增：查询所有审核通过的医生，下拉选择 -->
+    <select id="listPassDoctor" resultType="com.cnu.zyx.backend.entity.DoctorInfo">
+        select user_id, real_name, department, hospital, title
+        from doctor_info
+        where audit_status = 'pass'
+        order by real_name asc
+    </select>
+
+    <!-- AI推荐：根据科室查询审核通过的医生 -->
+    <select id="selectPassDoctorByDept" resultType="com.cnu.zyx.backend.entity.DoctorInfo">
+        select user_id, real_name, department, hospital, title
+        from doctor_info
+        where audit_status = 'pass'
+          and department = #{department}
+        order by real_name asc
+    </select>
+
+</mapper>

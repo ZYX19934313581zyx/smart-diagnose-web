@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cnu.zyx.backend.mapper.DoctorAttachmentMapper">
+
+    <insert id="insert">
+        insert into doctor_attachment(doctor_id,file_name,file_url,file_size,file_type)
+        values(#{doctorId},#{fileName},#{fileUrl},#{fileSize},#{fileType})
+    </insert>
+
+    <select id="selectByDoctorId" resultType="com.cnu.zyx.backend.entity.DoctorAttachment">
+        select * from doctor_attachment where doctor_id = #{doctorId}
+    </select>
+
+    <delete id="deleteById">
+        delete from doctor_attachment where id = #{id}
+    </delete>
+
+    <delete id="deleteByDoctorId">
+        delete from doctor_attachment where doctor_id = #{doctorId}
+    </delete>
+
+</mapper>

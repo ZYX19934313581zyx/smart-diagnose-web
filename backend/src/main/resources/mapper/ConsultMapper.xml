@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cnu.zyx.backend.mapper.ConsultMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO consult(user_id,doctor_id,title,symptom,department_id,past_medical,operation_history,allergy_history,img_url,is_anonymous,publish_type,is_public,ai_suggest,status)
+        VALUES(#{userId},#{doctorId},#{title},#{symptom},#{departmentId},#{pastMedical},#{operationHistory},#{allergyHistory},#{imgUrl},#{isAnonymous},#{publishType},#{isPublic},#{aiSuggest},#{status})
+    </insert>
+
+    <select id="selectById" resultType="com.cnu.zyx.backend.entity.Consult">
+        SELECT * FROM consult WHERE id = #{id}
+    </select>
+
+    <select id="selectPublicList" resultType="com.cnu.zyx.backend.entity.Consult">
+        SELECT * FROM consult WHERE publish_type = 1 AND is_public = 1 ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByDoctorId" resultType="com.cnu.zyx.backend.entity.Consult">
+        SELECT * FROM consult WHERE doctor_id = #{doctorId} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByUserId" resultType="com.cnu.zyx.backend.entity.Consult">
+        SELECT * FROM consult WHERE user_id = #{userId} ORDER BY create_time DESC
+    </select>
+
+    <update id="updateAiSuggest">
+        UPDATE consult SET ai_suggest = #{aiSuggest} WHERE id = #{id}
+    </update>
+
+    <update id="updateConsult">
+        UPDATE consult
+        SET doctor_id = #{doctorId},
+            publish_type = #{publishType},
+            is_public = #{isPublic}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectHallList" resultType="com.cnu.zyx.backend.entity.Consult">
+        SELECT * FROM consult
+        WHERE publish_type = 1
+          AND (
+            is_public = 1
+                OR #{loginRole} = 'doctor'
+            )
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectPublicConsultList" resultType="java.util.Map">
+        SELECT c.id,c.title,c.symptom,c.department_id,c.create_time,d.name as dept_name
+        FROM consult c
+        LEFT JOIN department d ON c.department_id = d.id
+        WHERE c.is_public = 1
+        <if test="keyword != null and keyword != ''">
+            AND (d.name LIKE CONCAT('%',#{keyword},'%') OR c.symptom LIKE CONCAT('%',#{keyword},'%'))
+        </if>
+        ORDER BY c.create_time DESC
+        LIMIT #{offset},#{pageSize}
+    </select>
+
+    <select id="countPublicConsult" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM consult c
+        LEFT JOIN department d ON c.department_id = d.id
+        WHERE c.is_public = 1
+        <if test="keyword != null and keyword != ''">
+            AND (d.name LIKE CONCAT('%',#{keyword},'%') OR c.symptom LIKE CONCAT('%',#{keyword},'%'))
+        </if>
+    </select>
+
+    <!-- 医生大厅分页：公开帖 + 全院私密帖 + 一对一发给自己的帖 -->
+    <select id="selectDoctorHallList" resultType="java.util.Map">
+        SELECT c.id,c.title,c.symptom,c.department_id,c.create_time,d.name as dept_name
+        FROM consult c
+        LEFT JOIN department d ON c.department_id = d.id
+        WHERE
+        (
+        c.is_public = 1
+        OR
+        (c.is_public = 0 AND c.doctor_id IS NULL)
+        OR
+        (c.is_public = 0 AND c.doctor_id = #{loginDoctorId})
+        )
+        <if test="keyword != null and keyword != ''">
+            AND (d.name LIKE CONCAT('%',#{keyword},'%') OR c.symptom LIKE CONCAT('%',#{keyword},'%'))
+        </if>
+        ORDER BY
+        CASE
+        WHEN TRIM(d.name) = TRIM(#{deptName}) THEN 0
+        WHEN d.name IS NULL THEN 1
+        ELSE 2
+        END ASC,
+        c.create_time DESC
+        LIMIT #{offset},#{size}
+    </select>
+
+    <select id="countDoctorHall" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM consult c
+        LEFT JOIN department d ON c.department_id = d.id
+        WHERE
+        (
+        c.is_public = 1
+        OR
+        (c.is_public = 0 AND c.doctor_id IS NULL)
+        OR
+        (c.is_public = 0 AND c.doctor_id = #{loginDoctorId})
+        )
+        <if test="keyword != null and keyword != ''">
+            AND (d.name LIKE CONCAT('%',#{keyword},'%') OR c.symptom LIKE CONCAT('%',#{keyword},'%'))
+        </if>
+    </select>
+
+    <!-- 待回复：定向分配给该医生，并且该医生没有产生过任何聊天回复 -->
+    <select id="selectWaitConsult" resultType="com.cnu.zyx.backend.entity.Consult">
+        SELECT DISTINCT c.*
+        FROM consult c
+        WHERE c.doctor_id = #{doctorId}
+          AND c.id NOT IN (
+            SELECT DISTINCT consult_id FROM consult_reply WHERE sender_id = #{doctorId}
+        )
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 历史回复：该医生发送过消息的全部问诊记录，去重 -->
+    <select id="selectHistoryConsult" resultType="com.cnu.zyx.backend.entity.Consult">
+        SELECT DISTINCT c.*
+        FROM consult c
+                 INNER JOIN consult_reply r ON c.id = r.consult_id
+        WHERE r.sender_id = #{doctorId}
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- ============ 管理员：全部问诊分页（不过滤is_public） ============ -->
+    <select id="selectAdminAllConsult" resultType="java.util.Map">
+        SELECT c.id,c.title,c.symptom,c.department_id,c.create_time,d.name as dept_name,c.is_public
+        FROM consult c
+        LEFT JOIN department d ON c.department_id = d.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (d.name LIKE CONCAT('%',#{keyword},'%') OR c.symptom LIKE CONCAT('%',#{keyword},'%'))
+            </if>
+        </where>
+        ORDER BY c.create_time DESC
+        LIMIT #{offset},#{pageSize}
+    </select>
+
+    <select id="countAdminAllConsult" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM consult c
+        LEFT JOIN department d ON c.department_id = d.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (d.name LIKE CONCAT('%',#{keyword},'%') OR c.symptom LIKE CONCAT('%',#{keyword},'%'))
+            </if>
+        </where>
+    </select>
+
+    <!-- 统计问诊总数量 -->
+    <select id="countAllConsult" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM consult
+    </select>
+
+    <!-- 统计今日新增问诊 -->
+    <select id="countTodayConsult" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM consult WHERE DATE(create_time) = CURDATE()
+    </select>
+
+</mapper>

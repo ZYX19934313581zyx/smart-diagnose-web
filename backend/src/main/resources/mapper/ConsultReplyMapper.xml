@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cnu.zyx.backend.mapper.ConsultReplyMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO consult_reply(consult_id,sender_id,sender_type,content,reply_scope,is_read,create_time)
+        VALUES(#{consultId},#{senderId},#{senderType},#{content},#{replyScope},#{isRead},NOW())
+    </insert>
+
+    <select id="selectByConsultId" resultType="com.cnu.zyx.backend.entity.ConsultReply">
+        SELECT
+            r.*,
+            p.nickname,
+            doc.real_name AS realName,
+            u.avatar
+        FROM consult_reply r
+                 LEFT JOIN patient_info p ON r.sender_id = p.user_id AND r.sender_type = 0
+                 LEFT JOIN doctor_info doc ON r.sender_id = doc.user_id AND r.sender_type = 1
+                 LEFT JOIN sys_user u ON r.sender_id = u.id
+        WHERE r.consult_id = #{consultId}
+        ORDER BY r.create_time ASC
+    </select>
+
+    <!--
+    未读总数 =
+    ①分配给我的全新一对一问诊（没有任何聊天记录）
+    +
+    ②对话里别人发给我的未读消息
+    -->
+    <select id="selectUnReadCount" resultType="int">
+        SELECT COUNT(DISTINCT item.id)
+        FROM (
+                 -- 场景1：私密问诊分配给当前医生，暂时没有聊天回复（新待接诊问诊）
+                 SELECT c.id
+                 FROM consult c
+                 WHERE c.is_public = 0
+                   AND c.doctor_id = #{receiveId}
+                   AND NOT EXISTS (SELECT 1 FROM consult_reply r WHERE r.consult_id = c.id)
+
+                 UNION
+
+                 -- 场景2：已有对话，存在他人发送的未读消息（原有逻辑）
+                 SELECT r.consult_id
+                 FROM consult_reply r
+                          LEFT JOIN consult c2 ON r.consult_id = c2.id
+                 WHERE r.is_read = 0
+                   AND r.sender_id != #{receiveId}
+                   AND (c2.user_id = #{receiveId} OR c2.doctor_id = #{receiveId})
+             ) AS item
+    </select>
+
+    <!--获取全部未读问诊ID集合：新分配问诊 + 有未读消息的问诊，去重-->
+    <select id="selectUnReadConsultIdList" resultType="java.lang.Long">
+        SELECT DISTINCT item.id
+        FROM (
+                 -- 场景1：全新一对一待接诊问诊（无聊天记录）
+                 SELECT c.id
+                 FROM consult c
+                 WHERE c.is_public = 0
+                   AND c.doctor_id = #{receiveId}
+                   AND NOT EXISTS (SELECT 1 FROM consult_reply r WHERE r.consult_id = c.id)
+
+                 UNION
+
+                 -- 场景2：对话中有未读消息的问诊
+                 SELECT r.consult_id
+                 FROM consult_reply r
+                          LEFT JOIN consult c2 ON r.consult_id = c2.id
+                 WHERE r.is_read = 0
+                   AND r.sender_id != #{receiveId}
+                   AND (c2.user_id = #{receiveId} OR c2.doctor_id = #{receiveId})
+             ) AS item
+    </select>
+
+    <!--修复MySQL多表UPDATE语法报错，改用子查询过滤条件-->
+    <update id="batchReadByConsult">
+        UPDATE consult_reply r
+        SET r.is_read = 1
+        WHERE r.consult_id = #{consultId}
+          AND r.sender_id != #{receiveId}
+          AND EXISTS (
+            SELECT 1
+            FROM consult c
+            WHERE c.id = r.consult_id
+          AND (c.user_id = #{receiveId} OR c.doctor_id = #{receiveId})
+            )
+    </update>
+</mapper>

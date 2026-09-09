@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cnu.zyx.backend.mapper.UserMapper">
+
+    <select id="selectByUsername" resultType="com.cnu.zyx.backend.entity.User">
+        SELECT id,username,password,role,status,create_time,avatar
+        FROM sys_user
+        WHERE username = #{username}
+    </select>
+
+    <!-- 开启自增主键回填 useGeneratedKeys keyProperty -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user(username,password,role)
+        VALUES(#{username},#{password},#{role})
+    </insert>
+
+    <update id="updateStatus">
+        update sys_user set status=#{status} where id=#{id}
+    </update>
+
+    <select id="selectById" resultType="com.cnu.zyx.backend.entity.User">
+        select id,username,password,role,status,create_time,avatar from sys_user where id = #{id}
+    </select>
+
+    <update id="updatePassword">
+        UPDATE sys_user
+        SET password = #{password}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用户头像OSS链接 -->
+    <update id="updateAvatar">
+        UPDATE sys_user
+        SET avatar = #{avatarUrl}
+        WHERE id = #{userId}
+    </update>
+
+</mapper>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cnu.zyx.backend.mapper.PatientInfoMapper">
+
+    <select id="selectPatientPage" resultType="com.cnu.zyx.backend.vo.PatientAdminVO">
+        SELECT
+        u.id AS id,
+        pi.nickname,
+        pi.gender,
+        pi.age,
+        pi.phone,
+        u.create_time AS createTime
+        FROM patient_info pi
+        LEFT JOIN sys_user u ON pi.user_id = u.id
+        <where>
+            <if test="nickname != null and nickname != ''">
+                pi.nickname like concat('%',#{nickname},'%')
+            </if>
+            <if test="userId != null">
+                pi.user_id = #{userId}
+            </if>
+        </where>
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="countPatient" resultType="java.lang.Long">
+        select count(*) from patient_info pi
+        LEFT JOIN sys_user u ON pi.user_id = u.id
+        <where>
+            <if test="nickname != null and nickname != ''">
+                pi.nickname like concat('%',#{nickname},'%')
+            </if>
+            <if test="userId != null">
+                pi.user_id = #{userId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertPatient" parameterType="com.cnu.zyx.backend.entity.PatientInfo">
+        insert into patient_info(user_id, nickname, phone, age, gender, allergy, disease_history, operation_history)
+        values(#{userId}, #{nickname}, #{phone}, #{age}, #{gender}, #{allergy}, #{diseaseHistory}, #{operationHistory})
+    </insert>
+
+    <update id="updatePatient" parameterType="com.cnu.zyx.backend.entity.PatientInfo">
+        update patient_info
+        set user_id = #{userId},
+            nickname = #{nickname},
+            phone = #{phone},
+            age = #{age},
+            gender = #{gender},
+            allergy = #{allergy},
+            disease_history = #{diseaseHistory},
+            operation_history = #{operationHistory}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from patient_info where id = #{id}
+    </delete>
+
+    <!-- 根据userId查询患者个人资料 -->
+    <select id="selectByUserId" resultType="com.cnu.zyx.backend.entity.PatientInfo">
+        select * from patient_info where user_id = #{userId}
+    </select>
+
+    <!-- 根据userId修改患者个人资料 -->
+    <update id="updateByUserId" parameterType="com.cnu.zyx.backend.entity.PatientInfo">
+        update patient_info
+        set nickname = #{nickname},
+            phone = #{phone},
+            age = #{age},
+            gender = #{gender},
+            allergy = #{allergy},
+            disease_history = #{diseaseHistory},
+            operation_history = #{operationHistory}
+        where user_id = #{userId}
+    </update>
+
+    <!-- 注册时新建一条空的患者资料，绑定用户ID -->
+    <insert id="insertEmpty">
+        insert into patient_info(user_id) values(#{userId})
+    </insert>
+
+</mapper>
