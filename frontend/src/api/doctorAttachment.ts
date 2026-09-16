@@ -1,17 +1,5 @@
 import request from '@/utils/request'
 
-// 文件上传
-export function uploadDoctorFile(formData: FormData): Promise<any> {
-  return request({
-    url: '/api/doctorAttachment/upload',
-    method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-}
-
 // 保存附件数据库记录
 export function saveAttachment(data: any): Promise<any> {
   return request({
@@ -33,14 +21,6 @@ export function getAttachmentList(doctorId: number): Promise<any> {
 export function deleteAttachment(id: number): Promise<any> {
   return request({
     url: `/api/doctorAttachment/${id}`,
-    method: 'delete'
-  })
-}
-
-// 删除该资质全部附件
-export function deleteAllAttachment(doctorId: number): Promise<any> {
-  return request({
-    url: `/api/doctorAttachment/all/${doctorId}`,
     method: 'delete'
   })
 }

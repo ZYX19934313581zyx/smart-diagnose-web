@@ -120,9 +120,17 @@ async function openAttachDialog(doctorId:number){
   }
 }
 
-//预览文件，拼接后端地址
+//预览文件：OSS完整链接直接打开，本地相对路径拼接后端地址
 function previewFile(url:string){
-  window.open("http://localhost:8081" + url)
+  if(!url){
+    ElMessage.warning('该附件没有可访问的地址')
+    return
+  }
+  if(url.startsWith('http://') || url.startsWith('https://')){
+    window.open(url)
+  }else{
+    window.open("http://localhost:8081" + url)
+  }
 }
 
 //重置搜索

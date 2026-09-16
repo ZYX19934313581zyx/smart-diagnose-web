@@ -5,7 +5,6 @@ import com.cnu.zyx.backend.entity.DoctorInfo;
 import com.cnu.zyx.backend.entity.PageResult;
 import com.cnu.zyx.backend.entity.PatientInfo;
 import com.cnu.zyx.backend.mapper.DoctorInfoMapper;
-import com.cnu.zyx.backend.mapper.UserMapper;
 import com.cnu.zyx.backend.service.ConsultService;
 import com.cnu.zyx.backend.service.DoctorInfoService;
 import com.cnu.zyx.backend.service.PatientInfoService;
@@ -26,8 +25,6 @@ public class AdminController {
     @Autowired
     private DoctorInfoMapper doctorInfoMapper;
     @Autowired
-    private UserMapper userMapper;
-    @Autowired
     private DoctorInfoService doctorInfoService;
     @Autowired
     private PatientInfoService patientInfoService;
@@ -43,39 +40,6 @@ public class AdminController {
         }
         List<Map<String,Object>> list = doctorInfoMapper.selectWaitAuditDoctor();
         return Result.success(list);
-    }
-
-    //审核通过
-    @PutMapping("/audit/pass/{userId}")
-    public Result<String> auditPass(@PathVariable Long userId, HttpServletRequest request){
-        Object roleObj = request.getAttribute("role");
-        if(roleObj == null || !"admin".equals(roleObj.toString())){
-            return Result.fail("权限不足，仅管理员可操作");
-        }
-        // 修改医生审核状态
-        int row = doctorInfoMapper.updateAuditStatus(userId,"pass");
-        if(row == 0){
-            return Result.fail("该医生已完成审核，不可重复操作");
-        }
-        //启用账号 status=0
-        userMapper.updateStatus(userId,0);
-        return Result.success("审核通过");
-    }
-
-    //驳回审核（可选接口）
-    @PutMapping("/audit/reject/{userId}")
-    public Result<String> auditReject(@PathVariable Long userId, HttpServletRequest request){
-        Object roleObj = request.getAttribute("role");
-        if(roleObj == null || !"admin".equals(roleObj.toString())){
-            return Result.fail("权限不足，仅管理员可操作");
-        }
-        int row = doctorInfoMapper.updateAuditStatus(userId,"reject");
-        if(row == 0){
-            return Result.fail("该医生已完成审核，不可重复操作");
-        }
-        //驳回后锁定账号
-        userMapper.updateStatus(userId,1);
-        return Result.success("审核驳回");
     }
 
     // 根据用户id查看医生完整详情

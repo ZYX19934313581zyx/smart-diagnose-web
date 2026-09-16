@@ -3,12 +3,10 @@ package com.cnu.zyx.backend.controller;
 import com.cnu.zyx.backend.entity.User;
 import com.cnu.zyx.backend.service.UserService;
 import com.cnu.zyx.backend.util.JwtUtil;
-import com.cnu.zyx.backend.util.OssUtil;
 import com.cnu.zyx.backend.util.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,9 +17,6 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private OssUtil ossUtil;
 
     //登录接口
     @PostMapping("/login")
@@ -61,18 +56,6 @@ public class UserController {
         String token = request.getHeader("token");
         Long userId = JwtUtil.getUserId(token);
         return userService.changePassword(userId, oldPwd, newPwd);
-    }
-
-    // 【废弃旧上传接口，前端统一走全局/upload】
-    @PostMapping("/uploadAvatar")
-    public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) throws Exception {
-        // 获取当前登录用户id
-        String token = request.getHeader("token");
-        Long userId = JwtUtil.getUserId(token);
-        // 上传到OSS，存放在avatar文件夹
-        String avatarUrl = ossUtil.upload(file, "avatar");
-        // 更新数据库头像地址
-        return userService.updateAvatar(userId, avatarUrl);
     }
 
     // 新接口：接收OSS返回的图片链接，更新数据库头像

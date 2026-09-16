@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 管理员登录
+// 登录
 export function login(data: any) {
   return request({
     url: '/api/user/login',
@@ -9,30 +9,12 @@ export function login(data: any) {
   })
 }
 
-// 获取医生分页列表【修改接口路径】
+// 获取医生分页列表
 export function getDoctorList(params: any) {
   return request({
     url: '/api/doctor/page',
     method: 'get',
     params
-  })
-}
-
-// 审核医生
-export function auditDoctor(userId: number, auditStatus: string) {
-  return request({
-    url: '/api/admin/doctor/audit',
-    method: 'put',
-    params: { userId, auditStatus }
-  })
-}
-
-// 编辑医生
-export function editDoctor(data: any) {
-  return request({
-    url: '/api/admin/doctor/edit',
-    method: 'put',
-    data
   })
 }
 
@@ -45,7 +27,6 @@ export function deleteDoctor(userId: number) {
   })
 }
 
-// ========== 新增接口 ==========
 // 工作台统计数据
 export const getDashboardStats = () => {
   return request({
@@ -68,24 +49,6 @@ export const getPatientPage = (params: any) => {
     url: '/api/admin/patient/page',
     method: 'get',
     params
-  })
-}
-
-// 修改患者账号状态
-export const updatePatientStatus = (id: number, status: number) => {
-  return request({
-    url: `/api/admin/patient/status/${id}`,
-    method: 'put',
-    data: { status }
-  })
-}
-
-// 修改医生账号状态
-export const updateDoctorStatus = (id: number, status: number) => {
-  return request({
-    url: `/api/admin/doctor/status/${id}`,
-    method: 'put',
-    data: { status }
   })
 }
 
