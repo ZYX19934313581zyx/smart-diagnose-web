@@ -97,6 +97,11 @@
           </el-radio-group>
         </el-form-item>
 
+        <!-- AI分析中提示 -->
+        <el-card v-if="aiLoading" style="margin-bottom:16px;background:#f5f7fa">
+          <p style="color:#909399;font-size:14px">AI正在分析症状并匹配科室医生，请稍候...</p>
+        </el-card>
+
         <!-- AI分析结果展示 -->
         <el-card v-if="aiResult" style="margin-bottom:16px;background:#f5f7fa">
           <h4>AI分析建议：</h4>
@@ -147,7 +152,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { addConsult, getDeptList, getAiRecommend } from '@/api/consult'
+import { addConsult, getDeptList, getAiPreRecommend } from '@/api/consult'
 import { uploadFile } from '@/api/user'
 import { getPassDoctorList } from '@/api/doctor'
 import { ElMessage, ElForm } from 'element-plus'
@@ -265,6 +270,30 @@ const autoFillHistory = () => {
 const afterSubmitVisible = ref(false)
 const aiOption = ref('no')
 const aiResult = ref<any>(null)
+const aiLoading = ref(false)
+
+// 选择"让AI分析"时，调用发布前AI预分析接口（不依赖问诊id）
+watch(aiOption, async (val) => {
+  if (val === 'yes' && !aiResult.value && !aiLoading.value) {
+    aiLoading.value = true
+    try {
+      const res: any = await getAiPreRecommend({
+        title: form.value.description.slice(0, 20),
+        symptom: form.value.description,
+        pastMedical: form.value.diseaseHistory
+      })
+      if (res.code === 200) {
+        aiResult.value = res.data
+      } else {
+        ElMessage.error(res.msg || 'AI分析失败')
+      }
+    } catch {
+      ElMessage.error('AI分析请求异常')
+    } finally {
+      aiLoading.value = false
+    }
+  }
+})
 const publishTarget = ref('hall')
 const selectedDoctor = ref<number | null>(null)
 const isPublic = ref('public')
@@ -275,6 +304,7 @@ const submit = async () => {
   await formRef.value.validate()
   loading.value = true
   aiResult.value = null
+  aiOption.value = 'no'
   loading.value = false
   afterSubmitVisible.value = true
 }
@@ -315,7 +345,7 @@ const confirmPublish = async () => {
       isAnonymous: form.value.anonymous ? 1 : 0,
       publishType: publishType,
       isPublic: isPublicNum,
-      aiSuggest: '',
+      aiSuggest: aiResult.value?.aiAnalysis || '',
       status: 1
     }
     const res: any = await addConsult(submitData)

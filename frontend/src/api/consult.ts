@@ -208,3 +208,12 @@ export function getAiRecommend(consultId: number | string) {
     method: 'get'
   })
 }
+
+// 【新增】发布前AI预分析（不依赖问诊id，弹窗选择AI分析时调用）
+export function getAiPreRecommend(data: Record<string, any>) {
+  return request({
+    url: '/api/consult/ai/pre-recommend',
+    method: 'post',
+    data
+  })
+}

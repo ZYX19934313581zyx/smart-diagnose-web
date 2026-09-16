@@ -242,6 +242,30 @@ public class ConsultController {
     }
 
     /**
+     * 发布前AI预分析：不依赖问诊id，直接根据表单内容分析并推荐科室医生
+     */
+    @PostMapping("/ai/pre-recommend")
+    public Result<Map<String, Object>> aiPreRecommend(@RequestBody Map<String, String> params) {
+        String title = params.get("title");
+        String symptom = params.get("symptom");
+        String pastMedical = params.get("pastMedical");
+        String prompt = "标题：" + (title == null ? "" : title) +
+                "\n症状：" + (symptom == null ? "" : symptom) +
+                "\n既往病史：" + (pastMedical == null ? "" : pastMedical);
+        String systemTip = "根据问诊信息给出简短病情分析，最后单独一行只输出最合适的一个科室中文名称，不要多余符号和多余文字。";
+
+        String aiFullContent = qwenOpenAiUtil.syncChat(systemTip, prompt);
+        String[] lines = aiFullContent.split("\n");
+        String targetDept = lines[lines.length - 1].trim();
+        List<DoctorInfo> recommendDoctorList = doctorInfoMapper.selectPassDoctorByDept(targetDept);
+
+        Map<String, Object> resMap = new HashMap<>();
+        resMap.put("aiAnalysis", aiFullContent);
+        resMap.put("doctorList", recommendDoctorList);
+        return Result.success(resMap);
+    }
+
+    /**
      * 独立AI聊天页面，自由提问流式接口（原生SSE）
      */
     @GetMapping(value = "/ai/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
