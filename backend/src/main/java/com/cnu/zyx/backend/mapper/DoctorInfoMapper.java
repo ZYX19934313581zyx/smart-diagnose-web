@@ -32,8 +32,6 @@ public interface DoctorInfoMapper {
     //统计符合条件的总条数
     Long countDoctor(@Param("name") String name, @Param("department") String department);
 
-    int updateById(DoctorInfo info);
-
     int deleteByUserId(@Param("userId") Long userId);
 
     // 新增：查询全部审核通过的医生，用于下拉选择
@@ -42,4 +40,5 @@ public interface DoctorInfoMapper {
     // 根据科室名称查询审核通过的医生（AI推荐医生专用）
     List<DoctorInfo> selectPassDoctorByDept(@Param("department") String department);
 
+    int updateById(DoctorInfo doctorInfo);
 }

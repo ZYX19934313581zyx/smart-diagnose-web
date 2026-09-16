@@ -43,6 +43,19 @@
         where user_id = #{info.userId}
     </update>
 
+    <update id="updateById">
+        update doctor_info
+        set real_name   = #{realName},
+            department  = #{department},
+            title       = #{title},
+            hospital    = #{hospital},
+            audit_status = #{auditStatus},
+            intro       = #{intro},
+            audit_msg   = #{auditMsg},
+            cert_file   = #{certFile}
+        where id = #{id}
+    </update>
+
     <select id="selectDoctorPage" resultType="com.cnu.zyx.backend.entity.DoctorInfo">
         select * from doctor_info
         <where>
@@ -67,16 +80,6 @@
             </if>
         </where>
     </select>
-
-    <update id="updateById">
-        update doctor_info
-        set real_name = #{realName},
-            department = #{department},
-            hospital = #{hospital},
-            title = #{title},
-            audit_status = #{auditStatus}
-        where user_id = #{userId}
-    </update>
 
     <delete id="deleteByUserId">
         delete from doctor_info where user_id = #{userId}

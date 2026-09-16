@@ -77,7 +77,7 @@ public class UserServiceImpl implements UserService {
         if ("patient".equals(role)) {
             patientInfoMapper.insertEmpty(newUserId);
         } else if ("doctor".equals(role)) {
-            userMapper.updateStatus(newUserId, 1);
+            // 医生注册后保持启用状态(status=0)，允许登录；是否审核通过由 doctor_info.audit_status 控制，前端据此限制未审核医生只能提交资质
             doctorInfoMapper.insertEmpty(newUserId);
         }
 
