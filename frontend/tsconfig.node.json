@@ -6,12 +6,18 @@
     "types": ["node"],
     "skipLibCheck": true,
 
+    /* Build mode：被根 tsconfig 引用的项目必须 composite，且不能 noEmit；
+       仅输出声明文件到临时目录，避免污染工程 */
+    "composite": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "outDir": "./node_modules/.tmp/tsconfig.node",
+
     /* Bundler mode */
     "module": "nodenext",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true,
 
     /* Linting */
     "noUnusedLocals": true,
