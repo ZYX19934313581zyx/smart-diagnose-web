@@ -80,7 +80,7 @@
         placeholder="输入消息内容..."
         @keyup.ctrl.enter="sendMsg"
       />
-      <el-button type="primary" @click="sendMsg">发送(Ctrl+Enter)</el-button>
+      <el-button type="primary" :loading="sending" @click="sendMsg">发送(Ctrl+Enter)</el-button>
     </div>
   </div>
 </template>
@@ -88,6 +88,7 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { getChatList, sendReply, getConsultDetail, setRead } from '@/api/consult'
 
 const route = useRoute()
@@ -97,6 +98,7 @@ const loginUserId = Number(localStorage.getItem('userId'))
 const chatScroll = ref<HTMLElement|null>(null)
 const chatList = ref<any[]>([])
 const sendText = ref('')
+const sending = ref(false)
 
 // 问诊详情 & 弹窗控制
 const detailDialog = ref(false)
@@ -171,14 +173,27 @@ async function loadChat(){
 }
 
 async function sendMsg(){
-  if(!sendText.value.trim()) return
-  await sendReply({
-    consultId,
-    content: sendText.value,
-    replyScope:1
-  })
-  sendText.value = ''
-  await loadChat()
+  const text = sendText.value.trim()
+  if(!text || sending.value) return
+  sending.value = true
+  try {
+    const res: any = await sendReply({
+      consultId,
+      content: text,
+      replyScope:1
+    })
+    if(res?.code === 200){
+      sendText.value = ''
+      await loadChat()
+    }else{
+      // 后端校验失败（如无权回复）时保留输入内容并提示
+      ElMessage.error(res?.msg || '发送失败，请稍后重试')
+    }
+  }catch(e){
+    ElMessage.error('网络异常，发送失败，请稍后重试')
+  }finally {
+    sending.value = false
+  }
 }
 
 onMounted(()=>{

@@ -43,28 +43,29 @@ public class ConsultReplyController {
         }
 
         // ==========权限校验核心逻辑==========
+        // 规则：
+        // 1. 患者仅能回复本人发布的问诊；
+        // 2. 发布到问诊大厅的问诊（公开帖，或“仅医生可见”且未指定医生的私密帖），所有医生均可回复讨论；
+        // 3. 一对一推送（私密且 doctor_id 已指定）仅被指定的医生可以回复。
         Integer isPublic = consult.getIsPublic();
-        if(isPublic == 0){
-            // 私密一对一问诊
-            if("patient".equals(role)){
-                // 患者本人允许回复
-                if(!consult.getUserId().equals(userId)){
-                    return Result.fail("您不是该问诊的发布者，无权回复");
-                }
-            }else if("doctor".equals(role)){
-                // 直接比对登录userId和问诊绑定的doctorId（user id）
-                if(!consult.getDoctorId().equals(userId)){
-                    return Result.fail("您无权回复这条私密问诊");
+        Long boundDoctorId = consult.getDoctorId();
+        if("patient".equals(role)){
+            if(!consult.getUserId().equals(userId)){
+                return Result.fail("您不是该问诊的发布者，无权回复");
+            }
+        }else if("doctor".equals(role)){
+            if(isPublic != null && isPublic == 1){
+                // 公开大厅帖：所有医生均可参与讨论
+            }else if(boundDoctorId == null){
+                // 大厅“仅医生可见”帖（未指定医生）：所有医生均可参与讨论
+            }else{
+                // 一对一推送：仅被指定医生可以回复
+                if(!boundDoctorId.equals(userId)){
+                    return Result.fail("该问诊为一对一推送，仅指定医生可以回复");
                 }
             }
         }else{
-            // 公开问诊：仅问诊发起者 和 所有医生允许回复，其余患者只能浏览
-            if("patient".equals(role)){
-                if(!consult.getUserId().equals(userId)){
-                    return Result.fail("该问诊为公开浏览模式，仅问诊发起人和医生可以回复");
-                }
-            }
-            // doctor角色直接放行，全部医生都可以参与讨论
+            return Result.fail("当前角色无权回复问诊");
         }
 
         ConsultReply reply = new ConsultReply();

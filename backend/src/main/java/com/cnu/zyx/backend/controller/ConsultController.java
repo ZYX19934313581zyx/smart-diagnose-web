@@ -165,7 +165,9 @@ public class ConsultController {
         }
 
         String deptName = doctorInfo.getDepartment();
-        Long loginDoctorId = doctorInfo.getId();
+        // consult.doctor_id 存的是 sys_user.id（一对一推送时由前端传入选中医生的 userId），
+        // 因此大厅筛选“一对一发给自己”的问诊时必须用当前登录用户的 userId
+        Long loginDoctorId = userId;
         return consultService.getDoctorConsultPage(page,size,keyword,deptName,loginDoctorId);
     }
 
