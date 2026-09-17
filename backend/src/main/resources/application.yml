@@ -1,12 +1,16 @@
 spring:
   application:
     name: backend
+  # 本地开发密钥/口令放在 application-local.yml（不入库，已在 .gitignore 忽略）；
+  # 生产环境通过同名环境变量注入。optional 表示该文件缺失时不影响启动。
+  config:
+    import: optional:classpath:application-local.yml
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/smart_diagnose?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
   # 文件上传配置
   servlet:
     multipart:
@@ -25,18 +29,18 @@ mybatis:
 server:
   port: 8081
 
-# 阿里云OSS配置（成都节点）
+# 阿里云OSS配置（成都节点）；真实密钥从 application-local.yml 或环境变量读取，请勿在此填写
 aliyun:
   oss:
     endpoint: oss-cn-chengdu.aliyuncs.com
-    access-key-id: 填写你的阿里云AccessKeyId
-    access-key-secret: 填写你的阿里云AccessKeySecret
+    access-key-id: ${ALIYUN_OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${ALIYUN_OSS_ACCESS_KEY_SECRET:}
     bucket-name: smart-diagnose-web
     url-prefix: https://smart-diagnose-web.oss-cn-chengdu.aliyuncs.com/
 
-# 通义千问流式AI配置
+# 通义千问流式AI配置；真实密钥从 application-local.yml 或环境变量读取，请勿在此填写
 ai:
   qwen:
-      api-key: 填写你的通义千问APIKEY
+      api-key: ${AI_QWEN_API_KEY:}
       base-url: https://ws-ba0h7puvu1ipznda.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/
       model: qwen3.8-flash
